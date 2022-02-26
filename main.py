@@ -139,7 +139,7 @@ def crack_server(ip):
 
 if __name__ == '__main__':
     init_database()
-    n=500
+    n=250
     multiprocessing.Pool(processes=n).map(get_hackability_servers, range(n))
     # save_hackability_server('61.104.24.189', 1280, 'a:123')
     # init_csv_file('ip;login;password;status;is_my;datetime;attempts')
